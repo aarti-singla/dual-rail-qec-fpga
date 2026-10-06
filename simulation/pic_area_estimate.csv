@@ -1,0 +1,6 @@
+platform,n_modes,n_layers,n_MZI,chip_length_mm,chip_width_mm,area_mm2,total_insertion_dB,V_pi,phase_shifter
+Si_AMF,33,11,181,5.35,4.69,25.09,3.3,4.0,thermo-optic
+Si_IMEC,33,11,181,4.25,4.03,17.13,2.75,3.5,thermo-optic
+SiN_Ligentec,33,11,181,7.55,5.35,40.39,1.65,10.0,thermo-optic
+LNOI_NanoLN,33,11,181,22.95,4.69,107.64,2.2,1.5,electro-optic
+TFLN,33,11,181,55.95,5.35,299.33,1.1,2.0,electro-optic Pockels

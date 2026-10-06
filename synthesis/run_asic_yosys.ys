@@ -1,0 +1,12 @@
+# run_asic_yosys.ys: ASIC synthesis of the d=3 decoder with Yosys and the Nangate 45 nm Open Cell Library.
+# Usage: yosys run_asic_yosys.ys (nangate45.lib from the OpenROAD-flow-scripts repo)
+read_verilog rep3_mwpm_decoder.v
+hierarchy -check -top rep3_decoder_registered
+flatten
+proc; opt; fsm; opt; memory; opt
+techmap; opt
+dfflibmap -liberty nangate45.lib     # map flip-flops to library cells
+abc        -liberty nangate45.lib    # technology mapping of combinational logic
+opt_clean
+stat -liberty nangate45.lib          # cell counts + total cell area
+write_verilog -noattr rep3_decoder_netlist.v

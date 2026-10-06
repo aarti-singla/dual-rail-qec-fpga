@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.vcd
+b_*
+*.bit
+*.jou
+*.log
+.Xil/

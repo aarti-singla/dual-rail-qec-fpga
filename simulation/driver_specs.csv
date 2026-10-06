@@ -1,0 +1,8 @@
+drive,load_pF,V_pi,risetime_ns,f_repetition_MHz,energy_per_switch_pJ,avg_power_uW,slew_V_per_ns,peak_current_mA,scenario,R_heater_ohm,duty_cycle,P_pi_mW,note
+electro-optic (capacitive),5.0,4.0,1.0,1.0,40.0,40.0,4.0,20.0,EO fast (1 ns rise),,,,
+electro-optic (capacitive),5.0,4.0,10.0,1.0,40.0,40.0,0.4,2.0,EO paper Pockels (10 ns),,,,
+electro-optic (capacitive),5.0,4.0,5.0,1.0,40.0,40.0,0.8,4.0,EO moderate (5 ns rise),,,,
+electro-optic (capacitive),2.0,1.5,0.1,10.0,2.25,22.5,15.0,30.0,LNOI fast Pockels (100 ps),,,,
+thermo-optic (resistive DC),,4.0,,,,,,,Si_AMF,1000,1.0,16.0,continuous DC; ~us-ms response; no capacitive switching energy
+thermo-optic (resistive DC),,3.5,,,,,,,Si_IMEC,1200,1.0,10.208,continuous DC; ~us-ms response; no capacitive switching energy
+thermo-optic (resistive DC),,10.0,,,,,,,SiN_Ligentec,2000,1.0,50.0,continuous DC; ~us-ms response; no capacitive switching energy

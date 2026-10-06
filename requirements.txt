@@ -1,0 +1,6 @@
+stim==1.16.*
+pymatching==2.4.*
+numpy
+scipy
+matplotlib
+pyserial

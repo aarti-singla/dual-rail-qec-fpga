@@ -1,0 +1,110 @@
+`timescale 1ns/1ps
+// End-to-end test of basys3_uart_top_d7 using the real uart_rx.v / uart_tx.v.
+// Two-byte syndromes go onto RsRx with 8N1 timing; the 3-byte RsTx response is decoded by a second uart_rx.
+module tb_basys3_uart_top_d7_real;
+    localparam real BIT_TIME_NS = 8680.0;
+
+    reg clk = 0;
+    reg RsRx = 1'b1;
+    wire RsTx;
+    wire [15:0] led;
+    integer errors = 0;
+
+    basys3_uart_top_d7 dut (
+        .clk(clk), .RsRx(RsRx), .RsTx(RsTx), .led(led)
+    );
+
+    always #5 clk = ~clk;
+
+    wire [7:0] host_rx_data;
+    wire       host_rx_valid;
+    uart_rx #(.CLK_FREQ(100_000_000), .BAUD_RATE(115_200)) host_rx (
+        .clk(clk), .rst_n(1'b1), .rx(RsTx),
+        .data(host_rx_data), .data_valid(host_rx_valid)
+    );
+
+    reg [7:0] captured [0:63];
+    integer   n_captured = 0;
+    always @(posedge clk) begin
+        if (host_rx_valid) begin
+            captured[n_captured] = host_rx_data;
+            n_captured = n_captured + 1;
+        end
+    end
+
+    task send_byte(input [7:0] b);
+        integer k;
+        begin
+            RsRx = 1'b0;
+            #(BIT_TIME_NS);
+            for (k = 0; k < 8; k = k + 1) begin
+                RsRx = b[k];
+                #(BIT_TIME_NS);
+            end
+            RsRx = 1'b1;
+            #(BIT_TIME_NS);
+        end
+    endtask
+
+    localparam NVEC = 6;
+    reg [11:0] test_syndrome [0:NVEC-1];
+    reg [6:0]  test_correction [0:NVEC-1];
+    reg [2:0]  test_err_idx [0:NVEC-1];
+
+    initial begin
+        test_syndrome[0]=12'h00c; test_correction[0]=7'h08; test_err_idx[0]=3'd3;
+        test_syndrome[1]=12'h020; test_correction[1]=7'h40; test_err_idx[1]=3'd6;
+        test_syndrome[2]=12'h018; test_correction[2]=7'h10; test_err_idx[2]=3'd4;
+        test_syndrome[3]=12'h003; test_correction[3]=7'h02; test_err_idx[3]=3'd1;
+        test_syndrome[4]=12'h030; test_correction[4]=7'h20; test_err_idx[4]=3'd5;
+        test_syndrome[5]=12'h006; test_correction[5]=7'h04; test_err_idx[5]=3'd2;
+    end
+
+    integer i;
+    reg [7:0] got_byte0, got_byte1, got_byte2;
+
+    initial begin
+        #15_000_000;   // 15ms watchdog -- two RX bytes now, generous margin
+        $display("WATCHDOG TIMEOUT at n_captured=%0d", n_captured);
+        $finish;
+    end
+
+    initial begin
+        repeat (5) @(posedge clk);
+
+        for (i = 0; i < NVEC; i = i + 1) begin
+            send_byte(test_syndrome[i][7:0]);
+            send_byte({4'b0, test_syndrome[i][11:8]});
+
+            wait (n_captured >= 3 * (i + 1));
+            wait (dut.tx_state == 0);
+
+            got_byte0 = captured[3*i + 0];
+            got_byte1 = captured[3*i + 1];
+            got_byte2 = captured[3*i + 2];
+
+            if (got_byte0[6:0] !== test_correction[i]) begin
+                errors = errors + 1;
+                $display("MISMATCH vec %0d: correction got=%b expected=%b",
+                          i, got_byte0[6:0], test_correction[i]);
+            end
+            if (!got_byte0[7]) begin
+                errors = errors + 1;
+                $display("MISMATCH vec %0d: corr_valid bit not set", i);
+            end
+            if (got_byte1[2:0] !== test_err_idx[i]) begin
+                errors = errors + 1;
+                $display("MISMATCH vec %0d: err_idx got=%0d expected=%0d",
+                          i, got_byte1[2:0], test_err_idx[i]);
+            end
+            $display("vec %0d: syndrome=%h -> correction=%b err_idx=%0d latency_byte=%0d",
+                      i, test_syndrome[i], got_byte0[6:0], got_byte1[2:0], got_byte2);
+        end
+
+        if (errors == 0)
+            $display("PASS: all %0d vectors matched over REAL bit-level UART (rx.v + tx.v, not stubs).", NVEC);
+        else
+            $display("FAIL: %0d mismatches.", errors);
+        $finish;
+    end
+endmodule
